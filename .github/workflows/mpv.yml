@@ -409,7 +409,7 @@ jobs:
         with:
           script: |
             const path = require('path');
-            const types = ["mpv-debug", "mpv-dev", "mpv"];
+            const types = ["mpv-debug", "mpv-dev-debug", "mpv-dev", "mpv"];
             const lgpl = ${{ matrix.lgpl }} ? "-lgpl" : "";
             let arch="";
             switch ( "${{ matrix.bit }}" ) {
