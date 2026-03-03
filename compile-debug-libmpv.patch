@@ -1,15 +1,15 @@
-From dd67b0e35f46a18ab2014fd7c61e86fbb76c8d50 Mon Sep 17 00:00:00 2001
+From dc0bc03e7b8b75ee87c991b72089a751093147b6 Mon Sep 17 00:00:00 2001
 From: build-bot <build@example.com>
-Date: Tue, 3 Mar 2026 14:02:02 +0800
+Date: Tue, 3 Mar 2026 16:52:26 +0800
 Subject: [PATCH] packages: compile debug libmpv
 
 ---
- cmake/packages_check.cmake |  5 +++--
- packages/mpv.cmake         | 18 +++++++++++++++++-
- 2 files changed, 20 insertions(+), 3 deletions(-)
+ cmake/packages_check.cmake |  6 ++++--
+ packages/mpv.cmake         | 19 ++++++++++++++++++-
+ 2 files changed, 22 insertions(+), 3 deletions(-)
 
 diff --git a/cmake/packages_check.cmake b/cmake/packages_check.cmake
-index acf8ccb..1db618f 100644
+index acf8ccb..37e2db9 100644
 --- a/cmake/packages_check.cmake
 +++ b/cmake/packages_check.cmake
 @@ -7,11 +7,11 @@ if(COMPILER_TOOLCHAIN STREQUAL "gcc")
@@ -26,19 +26,20 @@ index acf8ccb..1db618f 100644
  elseif(COMPILER_TOOLCHAIN STREQUAL "clang")
      set(rust_target "gnullvm")
      set(vapoursynth_pkgconfig_libs "-lVapourSynth -Wl,-delayload=VapourSynth.dll")
-@@ -21,6 +21,7 @@ elseif(COMPILER_TOOLCHAIN STREQUAL "clang")
+@@ -21,6 +21,8 @@ elseif(COMPILER_TOOLCHAIN STREQUAL "clang")
      set(ffmpeg_extra_libs "-lc++")
      set(mpv_lto_mode "-Db_lto_mode=thin")
      set(mpv_copy_debug COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/mpv.pdb ${CMAKE_CURRENT_BINARY_DIR}/mpv-debug/mpv.pdb)
 +    set(mpv_strip_release_only COMMAND ${EXEC} llvm-strip -s <BINARY_DIR>/libmpv-2.dll)
++    set(mpv_copy_debug_dll COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libmpv-2.pdb ${CMAKE_CURRENT_BINARY_DIR}/mpv-dev-debug/libmpv-2.pdb)
      if(CLANG_PACKAGES_LTO)
          set(cargo_lto_rustflags "CARGO_PROFILE_RELEASE_LTO=thin
                                   RUSTFLAGS='-C linker-plugin-lto -C embed-bitcode -C lto=thin'")
 diff --git a/packages/mpv.cmake b/packages/mpv.cmake
-index 66613e2..7bbf014 100644
+index 66613e2..a15d454 100644
 --- a/packages/mpv.cmake
 +++ b/packages/mpv.cmake
-@@ -61,9 +61,22 @@ ExternalProject_Add(mpv
+@@ -61,9 +61,23 @@ ExternalProject_Add(mpv
      LOG_DOWNLOAD 1 LOG_UPDATE 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1
  )
  
@@ -47,6 +48,7 @@ index 66613e2..7bbf014 100644
      DEPENDEES build
 +    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/mpv-dev-debug/include/mpv
 +    COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libmpv-2.dll ${CMAKE_CURRENT_BINARY_DIR}/mpv-dev-debug/libmpv-2.dll
++    ${mpv_copy_debug_dll}
 +    COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libmpv.dll.a ${CMAKE_CURRENT_BINARY_DIR}/mpv-dev-debug/libmpv.dll.a
 +    COMMAND ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/include/mpv/client.h       ${CMAKE_CURRENT_BINARY_DIR}/mpv-dev-debug/include/mpv/client.h
 +    COMMAND ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/include/mpv/stream_cb.h    ${CMAKE_CURRENT_BINARY_DIR}/mpv-dev-debug/include/mpv/stream_cb.h
@@ -62,7 +64,7 @@ index 66613e2..7bbf014 100644
      COMMENT "Stripping mpv binaries"
  )
  
-@@ -99,6 +112,9 @@ ExternalProject_Add_Step(mpv copy-package-dir
+@@ -99,6 +113,9 @@ ExternalProject_Add_Step(mpv copy-package-dir
      COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/mpv-debug ${CMAKE_BINARY_DIR}/mpv-debug-${TARGET_CPU}${x86_64_LEVEL}-${BUILDDATE}
      COMMAND ${RENAME} <SOURCE_DIR> ${CMAKE_BINARY_DIR}/mpv-debug-${TARGET_CPU}${x86_64_LEVEL}-${BUILDDATE}
  
