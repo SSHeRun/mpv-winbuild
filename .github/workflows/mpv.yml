@@ -391,7 +391,7 @@ jobs:
           if [ "${{ matrix.lgpl }}" = "true" ]; then
             git am --3way ../compile-lgpl-libmpv.patch
           fi
-          bash ../build.sh -t '${{ matrix.bit }}' -c '${{ inputs.compiler }}' -s "${{ matrix.lgpl == true && 'true' || 'false' }}"
+          git am --3way ../compile-debug-libmpv.patch          bash ../build.sh -t '${{ matrix.bit }}' -c '${{ inputs.compiler }}' -s "${{ matrix.lgpl == true && 'true' || 'false' }}"
       - name: Collect logs
         if: ${{ always() }}
         run: |
@@ -450,6 +450,12 @@ jobs:
         with:
           name: ${{ env.mpv-debug_name }}
           path: ${{ env.mpv-debug_path }}
+      - name: upload mpv-dev-debug
+        uses: actions/upload-artifact@v6
+        if: ${{ env.mpv-dev-debug_name && env.mpv-dev-debug_path }}
+        with:
+          name: ${{ env.mpv-dev-debug_name }}
+          path: ${{ env.mpv-dev-debug_path }}
       - name: upload mpv-dev
         uses: actions/upload-artifact@v6
         if: ${{ env.mpv-dev_name && env.mpv-dev_path }}
