@@ -1,18 +1,18 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From dd67b0e35f46a18ab2014fd7c61e86fbb76c8d50 Mon Sep 17 00:00:00 2001
 From: build-bot <build@example.com>
-Date: Mon, 2 Mar 2026 00:00:00 +0000
+Date: Tue, 3 Mar 2026 14:02:02 +0800
 Subject: [PATCH] packages: compile debug libmpv
 
 ---
- cmake/packages_check.cmake |  2 ++
- packages/mpv.cmake         | 23 +++++++++++++++++++++--
- 2 files changed, 23 insertions(+), 2 deletions(-)
+ cmake/packages_check.cmake |  5 +++--
+ packages/mpv.cmake         | 18 +++++++++++++++++-
+ 2 files changed, 20 insertions(+), 3 deletions(-)
 
 diff --git a/cmake/packages_check.cmake b/cmake/packages_check.cmake
-index acf8ccb..1234567 100644
+index acf8ccb..1db618f 100644
 --- a/cmake/packages_check.cmake
 +++ b/cmake/packages_check.cmake
-@@ -7,6 +7,7 @@ if(COMPILER_TOOLCHAIN STREQUAL "gcc")
+@@ -7,11 +7,11 @@ if(COMPILER_TOOLCHAIN STREQUAL "gcc")
      set(ffmpeg_extra_libs "-lstdc++")
      set(libjxl_unaligned_vector "-Wa,-muse-unaligned-vector-move") # fix crash on AVX2 proc (64bit) due to unaligned stack memory
      set(mpv_copy_debug COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/mpv.debug ${CMAKE_CURRENT_BINARY_DIR}/mpv-debug/mpv.debug)
@@ -20,24 +20,31 @@ index acf8ccb..1234567 100644
      set(mpv_add_debuglink COMMAND ${EXEC} ${TARGET_ARCH}-objcopy --only-keep-debug <BINARY_DIR>/mpv.exe <BINARY_DIR>/mpv.debug
                            COMMAND ${EXEC} ${TARGET_ARCH}-strip -s <BINARY_DIR>/mpv.exe
                            COMMAND ${EXEC} ${TARGET_ARCH}-objcopy --add-gnu-debuglink=<BINARY_DIR>/mpv.debug <BINARY_DIR>/mpv.exe
-@@ -17,6 +18,7 @@ elseif(COMPILER_TOOLCHAIN STREQUAL "clang")
+-                          COMMAND ${EXEC} ${TARGET_ARCH}-strip -s <BINARY_DIR>/mpv.com
+-                          COMMAND ${EXEC} ${TARGET_ARCH}-strip -s <BINARY_DIR>/libmpv-2.dll)
++                          COMMAND ${EXEC} ${TARGET_ARCH}-strip -s <BINARY_DIR>/mpv.com)
+ elseif(COMPILER_TOOLCHAIN STREQUAL "clang")
+     set(rust_target "gnullvm")
      set(vapoursynth_pkgconfig_libs "-lVapourSynth -Wl,-delayload=VapourSynth.dll")
+@@ -21,6 +21,7 @@ elseif(COMPILER_TOOLCHAIN STREQUAL "clang")
      set(ffmpeg_extra_libs "-lc++")
+     set(mpv_lto_mode "-Db_lto_mode=thin")
      set(mpv_copy_debug COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/mpv.pdb ${CMAKE_CURRENT_BINARY_DIR}/mpv-debug/mpv.pdb)
 +    set(mpv_strip_release_only COMMAND ${EXEC} llvm-strip -s <BINARY_DIR>/libmpv-2.dll)
-     set(mpv_lto_mode -Db_lto_mode=thin)
      if(CLANG_PACKAGES_LTO)
-         set(ffmpeg_lto --enable-lto=thin)
+         set(cargo_lto_rustflags "CARGO_PROFILE_RELEASE_LTO=thin
+                                  RUSTFLAGS='-C linker-plugin-lto -C embed-bitcode -C lto=thin'")
 diff --git a/packages/mpv.cmake b/packages/mpv.cmake
-index 8624aec..abcdefg 100644
+index 66613e2..7bbf014 100644
 --- a/packages/mpv.cmake
 +++ b/packages/mpv.cmake
-@@ -60,10 +60,23 @@ ExternalProject_Add(mpv
+@@ -61,9 +61,22 @@ ExternalProject_Add(mpv
      LOG_DOWNLOAD 1 LOG_UPDATE 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1
  )
  
+-ExternalProject_Add_Step(mpv strip-binary
 +ExternalProject_Add_Step(mpv copy-debug-dll
-+    DEPENDEES build
+     DEPENDEES build
 +    DEPENDERS strip-binary
 +    COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libmpv-2.dll ${CMAKE_CURRENT_BINARY_DIR}/mpv-dev-debug/libmpv-2.dll
 +    COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libmpv.dll.a ${CMAKE_CURRENT_BINARY_DIR}/mpv-dev-debug/libmpv.dll.a
@@ -48,15 +55,13 @@ index 8624aec..abcdefg 100644
 +    COMMENT "Copying debug libmpv with symbols"
 +)
 +
- ExternalProject_Add_Step(mpv strip-binary
--    DEPENDEES build
++ExternalProject_Add_Step(mpv strip-binary
 +    DEPENDEES copy-debug-dll
      ${mpv_add_debuglink}
 +    ${mpv_strip_release_only}
      COMMENT "Stripping mpv binaries"
  )
  
- ExternalProject_Add_Step(mpv copy-binary
 @@ -99,6 +112,9 @@ ExternalProject_Add_Step(mpv copy-package-dir
      COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/mpv-debug ${CMAKE_BINARY_DIR}/mpv-debug-${TARGET_CPU}${x86_64_LEVEL}-${BUILDDATE}
      COMMAND ${RENAME} <SOURCE_DIR> ${CMAKE_BINARY_DIR}/mpv-debug-${TARGET_CPU}${x86_64_LEVEL}-${BUILDDATE}
@@ -68,4 +73,5 @@ index 8624aec..abcdefg 100644
      COMMAND ${RENAME} <SOURCE_DIR> ${CMAKE_BINARY_DIR}/mpv-dev-${TARGET_CPU}${x86_64_LEVEL}-${BUILDDATE}
      COMMENT "Moving mpv package folder"
 -- 
-2.51.2.windows.1
+2.49.0.windows.1
+
