@@ -8,6 +8,14 @@ Use Github Action to build mpv for Windows with latest commit.
 
 Based on <https://github.com/shinchiro/mpv-winbuild-cmake>.
 
+## Scope of Changes
+
+To keep the build chain stable, this project follows a strict change boundary:
+
+1. `mpv` source (`mpv-player/mpv`) is treated as upstream and should not be heavily modified here.
+2. `mpv-winbuild-cmake` is treated as upstream toolchain code and should generally only be synced to newer commits.
+3. Functional/custom changes should be implemented in this repo (`mpv-winbuild`) only, mainly via workflow logic and patch files.
+
 ## Auto-Builds
 
 Checks the mpv repository every hour for updates. If there is an update and it is relevant to the windows build, it will automatically run the compilation and **release it on success**.
